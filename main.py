@@ -140,6 +140,7 @@ while True:
                         right_down = False
                     right_pinch_start = None
 
+            # display gesture text
             if display_text and gesture_text:
                 cv2.putText(frame, gesture_text, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
 

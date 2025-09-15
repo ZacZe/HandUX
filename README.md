@@ -19,6 +19,10 @@ There are plans for there to be settings where you can change the fingers used t
 ## Extra Features: 
 Pressing <code>s</code> will toggle the skeleton of the active hand. This can be used to see how this program registers actions. 
 
+Pressing <code>t</code> will toggle gesture text for improved user experience. This can be used to detect if the gestures are being understood. 
+
+Pressing <code>x</code> will toggle the variable settings. You can adjust the sensitivity and holding time threshold of your gestures.
+
 Pressing <code>SPACEBAR</code> will pause or resume the webcam footage. This can be used to temporarily disable this program. 
 
 Pressing <code>ESCAPE</code> will close the program. 
@@ -29,5 +33,4 @@ These features are currently a work-in-progress and should be implemented soon.
 - Multi-hand tracking for specific or custom actions
 - Custom behaviours from specific gestures
 - Specific modes for specific activities, eg: drawing or gaming
-- Settings to configure specific variables, such as distance threshold and holding threshold
-- Settings to change digits used to commit actions
+- Settings to customise fingers used in gestures
