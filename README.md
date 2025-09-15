@@ -1,4 +1,4 @@
-# Hi. Welcome to this hand-tracking tool. 
+# Hi. Welcome to HandUX, a hand-tracking tool. 
 
 ## Requirements: 
 You must have the following installed: 
