@@ -4,6 +4,7 @@ import pyautogui
 from math import hypot
 import numpy as np
 import threading
+import time 
 
 # threaded webcam capture class
 class WebcamStream:
@@ -47,7 +48,10 @@ paused = False
 left_down = False
 right_down = False
 
-detection_threshold = 40
+detection_threshold = 20
+hold_threshold = 0.25
+left_pinch_start = None
+right_pinch_start = None
 
 # screen size
 screen_w, screen_h = pyautogui.size()
@@ -90,29 +94,67 @@ while True:
             screen_y = np.interp(y_index, [0, frame.shape[0]], [0, screen_h])
             pyautogui.moveTo(screen_x, screen_y)
 
-            # left click (thumb + index pinch)
+            # # left click (thumb + index pinch)
+            # if hypot(x_index - x_thumb, y_index - y_thumb) < detection_threshold:
+            #     if not left_down:  # only press once
+            #         pyautogui.mouseDown()
+            #         left_down = True
+            #         #pyautogui.sleep(0.25)
+            # else:
+            #     if left_down:  # release when not pinched
+            #         pyautogui.mouseUp()
+            #         left_down = False
+            #         #pyautogui.sleep(0.25)
+
+            # right click (thumb + middle pinch) 
+            # if hypot(x_middle - x_thumb, y_middle - y_thumb) < detection_threshold:
+            #     if not right_down:
+            #         pyautogui.mouseDown(button="right")
+            #         right_down = True
+            #         pyautogui.sleep(0.25)
+            # else:
+            #     if right_down:
+            #         pyautogui.mouseUp(button="right")
+            #         right_down = False
+            #         pyautogui.sleep(0.25)
+
+            # ---------- LEFT CLICK ----------
             if hypot(x_index - x_thumb, y_index - y_thumb) < detection_threshold:
-                if not left_down:  # only press once
+                if left_pinch_start is None:
+                    left_pinch_start = time.time()
+
+                if not left_down and (time.time() - left_pinch_start >= hold_threshold):
                     pyautogui.mouseDown()
                     left_down = True
-                    pyautogui.sleep(0.25)
             else:
-                if left_down:  # release when not pinched
-                    pyautogui.mouseUp()
-                    left_down = False
-                    pyautogui.sleep(0.25)
+                if left_pinch_start is not None:
+                    pinch_duration = time.time() - left_pinch_start
+                    if pinch_duration < hold_threshold:
+                        pyautogui.click()
+                    elif left_down:
+                        pyautogui.mouseUp()
+                        left_down = False
+                    left_pinch_start = None
 
-            # right click (thumb + middle pinch)
+
+            # ---------- RIGHT CLICK ----------
             if hypot(x_middle - x_thumb, y_middle - y_thumb) < detection_threshold:
-                if not right_down:
+                if right_pinch_start is None:
+                    right_pinch_start = time.time()
+
+                if not right_down and (time.time() - right_pinch_start >= hold_threshold):
                     pyautogui.mouseDown(button="right")
                     right_down = True
-                    pyautogui.sleep(0.25)
             else:
-                if right_down:
-                    pyautogui.mouseUp(button="right")
-                    right_down = False
-                    pyautogui.sleep(0.25)
+                if right_pinch_start is not None:
+                    pinch_duration = time.time() - right_pinch_start
+                    if pinch_duration < hold_threshold:
+                        pyautogui.click(button="right")
+                    elif right_down:
+                        pyautogui.mouseUp(button="right")
+                        right_down = False
+                    right_pinch_start = None
+
 
     # display screen 
     window_name = "Hand Mouse"
