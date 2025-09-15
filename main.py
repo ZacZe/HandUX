@@ -35,7 +35,7 @@ class WebcamStream:
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(
     static_image_mode=False,
-    model_complexity=1,
+    model_complexity=0,
     min_detection_confidence=0.7,
     min_tracking_confidence=0.7,
     max_num_hands=1
@@ -43,6 +43,11 @@ hands = mpHands.Hands(
 Draw = mp.solutions.drawing_utils
 display_skeleton = False
 paused = False  
+
+left_down = False
+right_down = False
+
+detection_threshold = 40
 
 # screen size
 screen_w, screen_h = pyautogui.size()
@@ -86,17 +91,31 @@ while True:
             pyautogui.moveTo(screen_x, screen_y)
 
             # left click (thumb + index pinch)
-            if hypot(x_index - x_thumb, y_index - y_thumb) < 40:
-                pyautogui.click()
-                #pyautogui.sleep(0.25)
+            if hypot(x_index - x_thumb, y_index - y_thumb) < detection_threshold:
+                if not left_down:  # only press once
+                    pyautogui.mouseDown()
+                    left_down = True
+                    pyautogui.sleep(0.25)
+            else:
+                if left_down:  # release when not pinched
+                    pyautogui.mouseUp()
+                    left_down = False
+                    pyautogui.sleep(0.25)
 
             # right click (thumb + middle pinch)
-            if hypot(x_middle - x_thumb, y_middle - y_thumb) < 40:
-                pyautogui.click(button="right")
-                #pyautogui.sleep(0.25)
+            if hypot(x_middle - x_thumb, y_middle - y_thumb) < detection_threshold:
+                if not right_down:
+                    pyautogui.mouseDown(button="right")
+                    right_down = True
+                    pyautogui.sleep(0.25)
+            else:
+                if right_down:
+                    pyautogui.mouseUp(button="right")
+                    right_down = False
+                    pyautogui.sleep(0.25)
 
     # display screen 
-    window_name = "Testing Program"
+    window_name = "Hand Mouse"
     cv2.imshow(window_name, frame)
     cv2.setWindowProperty(window_name, cv2.WND_PROP_TOPMOST, 1)
 
