@@ -48,8 +48,8 @@ display_text = True
 gesture_text = ""
 paused = False
 settings_open = False
-left_down, right_down = False, False
-left_pinch_start, right_pinch_start = None, None
+left_down, right_down, middle_down = False, False, False
+left_pinch_start, right_pinch_start, middle_pinch_start = None, None, None
 
 def nothing(x): pass
 
@@ -140,9 +140,33 @@ while True:
                         right_down = False
                     right_pinch_start = None
 
+            # MIDDLE CLICK / HOLD 
+            if hypot(x_index - x_middle, y_index - y_middle) < detection_threshold: 
+                if middle_pinch_start is None:
+                    middle_pinch_start = time.time()
+                if not middle_down and (time.time() - middle_pinch_start >= hold_threshold):
+                    gesture_text = "Middle Hold"
+                    pyautogui.mouseDown(button="middle")
+                    middle_down = True
+            else:
+                if middle_pinch_start is not None:
+                    pinch_duration = time.time() - middle_pinch_start
+                    if pinch_duration < hold_threshold:
+                        pyautogui.click(button="middle")
+                        gesture_text = "Middle Click"
+
+                    elif middle_down:
+                        pyautogui.mouseUp(button="middle")
+                        gesture_text = ""
+                        middle_down = False
+                    middle_pinch_start = None
+
             # display gesture text
             if display_text and gesture_text:
                 cv2.putText(frame, gesture_text, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+    else: 
+        cv2.putText(frame, "▐▐ PAUSE", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
+
 
     # show feed
     window_name = "Hand Mouse"
@@ -159,7 +183,7 @@ while True:
         display_skeleton = not display_skeleton
     elif key == ord("t"): # toggle text
         display_text = not display_text
-    elif key == ord("x"): # toggle settings window
+    elif key == ord("x"): # toggle settings 
         if not settings_open:
             cv2.namedWindow("Settings")
             cv2.createTrackbar("Detection Threshold", "Settings", detection_threshold, 100, nothing)
