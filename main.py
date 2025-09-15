@@ -165,7 +165,7 @@ while True:
             if display_text and gesture_text:
                 cv2.putText(frame, gesture_text, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
     else: 
-        cv2.putText(frame, "▐▐ PAUSE", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
+        cv2.putText(frame, "PAUSE", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
 
 
     # show feed
