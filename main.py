@@ -35,12 +35,14 @@ class WebcamStream:
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(
     static_image_mode=False,
-    model_complexity=0,
+    model_complexity=1,
     min_detection_confidence=0.7,
     min_tracking_confidence=0.7,
     max_num_hands=1
 )
 Draw = mp.solutions.drawing_utils
+display_skeleton = False
+paused = False  
 
 # screen size
 screen_w, screen_h = pyautogui.size()
@@ -54,49 +56,60 @@ while True:
         continue
 
     frame = cv2.flip(frame, 1)
-    frameRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = hands.process(frameRGB)
 
-    landmarkList = []
-    if results.multi_hand_landmarks:
-        for handlm in results.multi_hand_landmarks:
-            for _id, lm in enumerate(handlm.landmark):
-                h, w, _ = frame.shape
-                x, y = int(lm.x * w), int(lm.y * h)
-                landmarkList.append([_id, x, y])
+    # if not paused (spacebar pressed)
+    if not paused:
+        frameRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = hands.process(frameRGB)
 
-            # comment this line to save FPS
-            #Draw.draw_landmarks(frame, handlm, mpHands.HAND_CONNECTIONS)
+        landmarkList = []
+        if results.multi_hand_landmarks:
+            for handlm in results.multi_hand_landmarks:
+                for _id, lm in enumerate(handlm.landmark):
+                    h, w, _ = frame.shape
+                    x, y = int(lm.x * w), int(lm.y * h)
+                    landmarkList.append([_id, x, y])
 
-    if landmarkList:
-        # coords
-        x_thumb, y_thumb = landmarkList[4][1], landmarkList[4][2]
-        x_index, y_index = landmarkList[8][1], landmarkList[8][2]
-        x_middle, y_middle = landmarkList[12][1], landmarkList[12][2]
+                # if skeleton display enabled (s key pressed)
+                if display_skeleton:
+                    Draw.draw_landmarks(frame, handlm, mpHands.HAND_CONNECTIONS)
 
-        # move cursor with index finger
-        screen_x = np.interp(x_index, [0, frame.shape[1]], [0, screen_w])
-        screen_y = np.interp(y_index, [0, frame.shape[0]], [0, screen_h])
-        pyautogui.moveTo(screen_x, screen_y)
+        if landmarkList:
+            # coords
+            x_thumb, y_thumb = landmarkList[4][1], landmarkList[4][2]
+            x_index, y_index = landmarkList[8][1], landmarkList[8][2]
+            x_middle, y_middle = landmarkList[12][1], landmarkList[12][2]
 
-        # left click (thumb + index pinch)
-        if hypot(x_index - x_thumb, y_index - y_thumb) < 40:
-            pyautogui.click()
-            #pyautogui.sleep(0.25)
+            # move cursor with index finger
+            screen_x = np.interp(x_index, [0, frame.shape[1]], [0, screen_w])
+            screen_y = np.interp(y_index, [0, frame.shape[0]], [0, screen_h])
+            pyautogui.moveTo(screen_x, screen_y)
 
-        # right click (thumb + middle pinch)
-        if hypot(x_middle - x_thumb, y_middle - y_thumb) < 40:
-            pyautogui.click(button="right")
-            #pyautogui.sleep(0.25)
+            # left click (thumb + index pinch)
+            if hypot(x_index - x_thumb, y_index - y_thumb) < 40:
+                pyautogui.click()
+                #pyautogui.sleep(0.25)
+
+            # right click (thumb + middle pinch)
+            if hypot(x_middle - x_thumb, y_middle - y_thumb) < 40:
+                pyautogui.click(button="right")
+                #pyautogui.sleep(0.25)
 
     # display screen 
     window_name = "Testing Program"
     cv2.imshow(window_name, frame)
     cv2.setWindowProperty(window_name, cv2.WND_PROP_TOPMOST, 1)
 
+    # key pressed
+    key = cv2.waitKey(1) & 0xFF
     # press ESC to quit
-    if cv2.waitKey(1) & 0xFF == 27:
+    if key == 27:
         break
+    # press SPACE to pause/resume
+    elif key == 32:
+        paused = not paused 
+    elif key == ord("s"): 
+        display_skeleton = not display_skeleton
 
 stream.stop()
 cv2.destroyAllWindows()
