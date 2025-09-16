@@ -50,22 +50,27 @@ hands = mpHands.Hands(
 Draw = mp.solutions.drawing_utils
 
 # flags + states
-display_skeleton, display_text = True, True
+display_skeleton, display_text, display_settings = True, True, False
 gesture_text = ""
 paused = False
-settings_open = False
 left_down, right_down, middle_down = False, False, False
 left_pinch_start, right_pinch_start, middle_pinch_start = None, None, None
 
 def nothing(x): pass
 
 # default values if settings window isn’t open yet
-detection_threshold = 30
-hold_threshold = 0.35
+left_detection_threshold = 30
+left_hold_threshold = 0.35
+
+right_detection_threshold = 30
+right_hold_threshold = 0.35
+
+middle_detection_threshold = 30
+middle_hold_threshold = 0.35
 
 # screen size
 screen_w, screen_h = pyautogui.size()
-#screen_w += (screen_w / 10)
+screen_w += (screen_w / 10)
 screen_h += (screen_h / 10)
 
 # start threaded capture
@@ -78,9 +83,12 @@ while True:
     frame = cv2.flip(frame, 1)
 
     # if settings window is open → update trackbar values
-    if settings_open:
-        detection_threshold = cv2.getTrackbarPos("Detection Threshold", "Settings")
-        hold_threshold = cv2.getTrackbarPos("Holding Threshold (x100ms)", "Settings") / 100.0
+    if display_settings:
+        left_detection_threshold = cv2.getTrackbarPos("Left Mouse Detection Threshold", "Settings")
+        left_hold_threshold = cv2.getTrackbarPos("Left Mouse Holding Threshold (x100ms)", "Settings") / 100.0
+
+        right_detection_threshold = cv2.getTrackbarPos("Right Mouse Detection Threshold", "Settings")
+        right_hold_threshold = cv2.getTrackbarPos("Right Mouse Holding Threshold (x100ms)", "Settings") / 100.0
 
     if not paused:
         frameRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -103,22 +111,52 @@ while True:
             x_middle, y_middle = landmarkList[12][1], landmarkList[12][2]
 
             # move cursor
-            screen_x = np.interp(x_index, [0, frame.shape[1]], [0, screen_w])
-            screen_y = np.interp(y_index, [0, frame.shape[0]], [0, screen_h])
-            pyautogui.moveTo(screen_x, screen_y)
+            # Sensitivity factor >1 means faster cursor movement (try 2.0 to 5.0)
+            sensitivity = 1.5 
+
+            # Frame dimensions
+            frame_h, frame_w = frame.shape[:2]
+
+            # Center of the frame
+            center_x = frame_w // 2
+            center_y = frame_h // 2
+
+            # Relative movement from center, scaled
+            rel_x = (x_index - center_x) / (frame_w / 2)
+            rel_y = (y_index - center_y) / (frame_h / 2)
+
+            # Apply sensitivity
+            scaled_x = rel_x * sensitivity
+            scaled_y = rel_y * sensitivity
+
+            # Clamp values to [-1, 1] to avoid overshoot
+            scaled_x = max(min(scaled_x, 1), -1)
+            scaled_y = max(min(scaled_y, 1), -1)
+
+            # Map to screen coordinates
+            screen_x = (scaled_x + 1) / 2 * screen_w
+            screen_y = (scaled_y + 1) / 2 * screen_h
+
+            try:
+                pyautogui.moveTo(screen_x, screen_y)
+            except pyautogui.FailSafeException:
+                # handle fail-safe triggered — e.g., pause tracking or just ignore
+                print("Fail-safe triggered: Mouse moved to corner - Pausing cursor control.")
+                paused = True  # or whatever logic you want
+
 
             # LEFT CLICK / HOLD
-            if hypot(x_index - x_thumb, y_index - y_thumb) < detection_threshold:
+            if hypot(x_index - x_thumb, y_index - y_thumb) < left_detection_threshold:
                 if left_pinch_start is None:
                     left_pinch_start = time.time()
-                if not left_down and (time.time() - left_pinch_start >= hold_threshold):
+                if not left_down and (time.time() - left_pinch_start >= left_hold_threshold):
                     gesture_text = "Left Hold"
                     pyautogui.mouseDown()
                     left_down = True
             else:
                 if left_pinch_start is not None:
                     pinch_duration = time.time() - left_pinch_start
-                    if pinch_duration < hold_threshold:
+                    if pinch_duration < left_hold_threshold:
                         gesture_text = "Left Click"
                         pyautogui.click()
                     elif left_down:
@@ -128,17 +166,17 @@ while True:
                     left_pinch_start = None
 
             # RIGHT CLICK / HOLD
-            if hypot(x_middle - x_thumb, y_middle - y_thumb) < detection_threshold:
+            if hypot(x_middle - x_thumb, y_middle - y_thumb) < right_detection_threshold:
                 if right_pinch_start is None:
                     right_pinch_start = time.time()
-                if not right_down and (time.time() - right_pinch_start >= hold_threshold):
+                if not right_down and (time.time() - right_pinch_start >= right_hold_threshold):
                     gesture_text = "Right Hold"
                     pyautogui.mouseDown(button="right")
                     right_down = True
             else:
                 if right_pinch_start is not None:
                     pinch_duration = time.time() - right_pinch_start
-                    if pinch_duration < hold_threshold:
+                    if pinch_duration < right_hold_threshold:
                         pyautogui.click(button="right")
                         gesture_text = "Right Click"
 
@@ -149,17 +187,17 @@ while True:
                     right_pinch_start = None
 
             # MIDDLE CLICK / HOLD 
-            if hypot(x_index - x_middle, y_index - y_middle) < detection_threshold: 
+            if hypot(x_index - x_middle, y_index - y_middle) < middle_detection_threshold: 
                 if middle_pinch_start is None:
                     middle_pinch_start = time.time()
-                if not middle_down and (time.time() - middle_pinch_start >= hold_threshold):
+                if not middle_down and (time.time() - middle_pinch_start >= middle_hold_threshold):
                     gesture_text = "Middle Hold"
                     pyautogui.mouseDown(button="middle")
                     middle_down = True
             else:
                 if middle_pinch_start is not None:
                     pinch_duration = time.time() - middle_pinch_start
-                    if pinch_duration < hold_threshold:
+                    if pinch_duration < middle_hold_threshold:
                         pyautogui.click(button="middle")
                         gesture_text = "Middle Click"
 
@@ -192,14 +230,22 @@ while True:
     elif key == ord("t"): # toggle text
         display_text = not display_text
     elif key == ord("x"): # toggle settings 
-        if not settings_open:
+        if not display_settings:
             cv2.namedWindow("Settings")
-            cv2.createTrackbar("Detection Threshold", "Settings", detection_threshold, 100, nothing)
-            cv2.createTrackbar("Holding Threshold (x100ms)", "Settings", int(hold_threshold*100), 100, nothing)
-            settings_open = True
+            cv2.resizeWindow("Settings", 600, 300)
+
+            # settings for left click / hold
+            cv2.createTrackbar("Left Mouse Detection Threshold", "Settings", left_detection_threshold, 100, nothing)
+            cv2.createTrackbar("Left Mouse Holding Threshold (x100ms)", "Settings", int(left_hold_threshold*100), 100, nothing)
+            
+            # settings for right click / hold 
+            cv2.createTrackbar("Right Mouse Detection Threshold", "Settings", right_detection_threshold, 100, nothing)
+            cv2.createTrackbar("Right Mouse Holding Threshold (x100ms)", "Settings", int(right_hold_threshold*100), 100, nothing)
+
+            display_settings = True
         else:
             cv2.destroyWindow("Settings")
-            settings_open = False
+            display_settings = False
 
 stream.stop()
 cv2.destroyAllWindows()
