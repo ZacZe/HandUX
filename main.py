@@ -10,10 +10,18 @@ import time
 class WebcamStream:
     def __init__(self, src=0):
         self.cap = cv2.VideoCapture(src)
+        self.setRes()
         self.grabbed, self.frame = self.cap.read()
         self.stopped = False
         t = threading.Thread(target=self.update, daemon=True)
         t.start()
+
+    def setRes(self, width, height): 
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+    def setRes(self): 
+        pass
 
     def update(self):
         while not self.stopped:
@@ -30,7 +38,6 @@ class WebcamStream:
         self.stopped = True
         self.cap.release()
 
-
 # mediapipe setup
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(
@@ -43,8 +50,7 @@ hands = mpHands.Hands(
 Draw = mp.solutions.drawing_utils
 
 # flags + states
-display_skeleton = False
-display_text = True
+display_skeleton, display_text = True, True
 gesture_text = ""
 paused = False
 settings_open = False
@@ -54,11 +60,13 @@ left_pinch_start, right_pinch_start, middle_pinch_start = None, None, None
 def nothing(x): pass
 
 # default values if settings window isn’t open yet
-detection_threshold = 40
-hold_threshold = 0.25
+detection_threshold = 30
+hold_threshold = 0.35
 
 # screen size
 screen_w, screen_h = pyautogui.size()
+#screen_w += (screen_w / 10)
+screen_h += (screen_h / 10)
 
 # start threaded capture
 stream = WebcamStream(0)
@@ -175,7 +183,7 @@ while True:
 
     # key press actions
     key = cv2.waitKey(1) & 0xFF
-    if key == 27:   # ESC = quit
+    if key == 27: # ESC = quit
         break
     elif key == 32: # SPACE = pause/resume
         paused = not paused
