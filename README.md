@@ -29,7 +29,6 @@ Pressing <code>ESCAPE</code> will close the program.
 
 ## Future Features: 
 These features are currently a work-in-progress and should be implemented soon. 
-- Text displaying current gestures and its corresponding action
 - Multi-hand tracking for specific or custom actions
 - Custom behaviours from specific gestures
 - Specific modes for specific activities, eg: drawing or gaming

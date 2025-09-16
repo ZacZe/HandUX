@@ -23,6 +23,12 @@ class WebcamStream:
     def setRes(self): 
         pass
 
+    def getResWidth(self):
+        return int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    
+    def getResHeight(self):
+        return int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
     def update(self):
         while not self.stopped:
             grabbed, frame = self.cap.read()
@@ -38,6 +44,14 @@ class WebcamStream:
         self.stopped = True
         self.cap.release()
 
+# flags + states
+display_skeleton, display_text, display_settings = True, True, False
+gesture_text = ""
+num_hands=1
+paused = False
+left_down, right_down, middle_down = False, False, False
+left_pinch_start, right_pinch_start, middle_pinch_start = None, None, None
+
 # mediapipe setup
 mpHands = mp.solutions.hands
 hands = mpHands.Hands(
@@ -45,16 +59,9 @@ hands = mpHands.Hands(
     model_complexity=0,
     min_detection_confidence=0.7,
     min_tracking_confidence=0.7,
-    max_num_hands=1
+    max_num_hands=num_hands
 )
 Draw = mp.solutions.drawing_utils
-
-# flags + states
-display_skeleton, display_text, display_settings = True, True, False
-gesture_text = ""
-paused = False
-left_down, right_down, middle_down = False, False, False
-left_pinch_start, right_pinch_start, middle_pinch_start = None, None, None
 
 def nothing(x): pass
 
@@ -69,9 +76,9 @@ middle_detection_threshold = 30
 middle_hold_threshold = 0.35
 
 # screen size
-screen_w, screen_h = pyautogui.size()
-screen_w += (screen_w / 10)
-screen_h += (screen_h / 10)
+og_screen_w, og_screen_h = pyautogui.size()
+screen_w = og_screen_w + (og_screen_w / 10)
+screen_h = og_screen_h + (og_screen_h / 10)
 
 # start threaded capture
 stream = WebcamStream(0)
@@ -111,25 +118,25 @@ while True:
             x_middle, y_middle = landmarkList[12][1], landmarkList[12][2]
 
             # move cursor
-            # Sensitivity factor >1 means faster cursor movement (try 2.0 to 5.0)
+            # sensitivity factor (1 is normal but mid, under 1 is risky)
             sensitivity = 1.5 
 
-            # Frame dimensions
+            # frame dimensions
             frame_h, frame_w = frame.shape[:2]
 
-            # Center of the frame
+            # center of the frame
             center_x = frame_w // 2
             center_y = frame_h // 2
 
-            # Relative movement from center, scaled
+            # relative movement from center but scaled
             rel_x = (x_index - center_x) / (frame_w / 2)
             rel_y = (y_index - center_y) / (frame_h / 2)
 
-            # Apply sensitivity
+            # apply sensitivity
             scaled_x = rel_x * sensitivity
             scaled_y = rel_y * sensitivity
 
-            # Clamp values to [-1, 1] to avoid overshoot
+            # clamp values to [-1, 1] to avoid overshoot
             scaled_x = max(min(scaled_x, 1), -1)
             scaled_y = max(min(scaled_y, 1), -1)
 
@@ -213,6 +220,8 @@ while True:
     else: 
         cv2.putText(frame, "PAUSE", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
 
+    # display number of hands
+    cv2.putText(frame, str(num_hands)+"HAND(S)", (stream.getResHeight()-10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
 
     # show feed
     window_name = "Hand Mouse"
@@ -229,6 +238,19 @@ while True:
         display_skeleton = not display_skeleton
     elif key == ord("t"): # toggle text
         display_text = not display_text
+    elif key == ord("n"): # toggle number of hands
+        if num_hands == 1: # 1 -> 2
+            num_hands+=1
+        elif num_hands == 2: # 2 -> 1
+            num_hands-=1
+
+        hands = mpHands.Hands(
+            static_image_mode=False,
+            model_complexity=0,
+            min_detection_confidence=0.7,
+            min_tracking_confidence=0.7,
+            max_num_hands=num_hands
+        )
     elif key == ord("x"): # toggle settings 
         if not display_settings:
             cv2.namedWindow("Settings")
