@@ -216,15 +216,15 @@ while True:
 
             # display gesture text
             if display_text and gesture_text:
-                cv2.putText(frame, gesture_text, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+                cv2.putText(frame, gesture_text, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
     else: 
-        cv2.putText(frame, "PAUSE", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
+        cv2.putText(frame, "PAUSED", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3)
 
     # display number of hands
-    cv2.putText(frame, str(num_hands)+"HAND(S)", (stream.getResHeight()-10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
+    cv2.putText(frame, str(num_hands)+"HAND(S)", (stream.getResHeight()-10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 3)
 
     # show feed
-    window_name = "Hand Mouse"
+    window_name = "HandUX"
     cv2.imshow(window_name, frame)
     cv2.setWindowProperty(window_name, cv2.WND_PROP_TOPMOST, 1)
 
