@@ -1,5 +1,4 @@
 import cv2
-import mediapipe as mp
 import pyautogui
 import state
 from gesture_one_hand import process_one_hand

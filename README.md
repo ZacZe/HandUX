@@ -1,13 +1,12 @@
-# Hi. Welcome to HandUX, a hand-tracking tool. 
-
-<mark> !!! THIS IS A WORK IN PROGRESS, I WILL DIVIDE THE PROGRAM INTO INDIVIDUAL MODULES FOR EASY VIEWING !!! </mark>
+# Hi. Welcome to HandUX, a hand-tracking controller for PCs.
 
 ## Requirements: 
 You must have the following installed: 
+- Python 3.12 (3.13> is not supported by mediapipe)
+
 - mediapipe (Python)
 - OpenCV-Python (Python)
 - PYAutoGUI (Python)
-- numpy (Python)
 
 ## How to Use: 
 The cursor is controlled by the movement of the tip of the index finger. 
