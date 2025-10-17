@@ -8,6 +8,12 @@ You must have the following installed:
 - OpenCV-Python (Python)
 - PYAutoGUI (Python)
 
+- msvc-runtime (Python) (Only install if facing DLL importing errors)
+
+All but Python 3.12 can be installed via <code>pip install [required library name]</code>.
+
+Python 3.12 must be installed from the official [Python](https://www.python.org/downloads/release/python-3120/) website. 
+
 ## How to Use: 
 The cursor is controlled by the movement of the tip of the index finger. 
 
