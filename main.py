@@ -4,7 +4,7 @@ import state
 from gesture_one_hand import process_one_hand
 from gesture_two_hands import process_two_hands
 from settings import SettingsWindow
-from hands_processing import mpHands, Draw, init_hands, process_hands
+from hands_processing import init_hands, process_hands
 from webcam_stream import WebcamStream
 
 # -------- state --------

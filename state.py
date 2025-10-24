@@ -24,11 +24,11 @@ class State:
         self.middle_pinch_start = None
 
         # default thresholds
-        self.left_detection_threshold = 30
+        self.left_detection_threshold = 20
         self.left_hold_threshold = 0.35
 
-        self.right_detection_threshold = 30
+        self.right_detection_threshold = 20
         self.right_hold_threshold = 0.35
 
-        self.middle_detection_threshold = 30
+        self.middle_detection_threshold = 20
         self.middle_hold_threshold = 0.35

@@ -1,4 +1,5 @@
 import cv2
+import state
 
 class SettingsWindow:
     def __init__(self, state):

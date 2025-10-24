@@ -2,24 +2,27 @@ import cv2
 import threading
 
 class WebcamStream:
-    def __init__(self, src=0):
-        self.cap = cv2.VideoCapture(src)
-        self.setRes()
+    def __init__(self, src=0, width=480, height=320):
+        self.cap = cv2.VideoCapture(src, cv2.CAP_DSHOW)
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        self.cap.set(cv2.CAP_PROP_FPS, 30)
+
         self.grabbed, self.frame = self.cap.read()
         self.stopped = False
-        t = threading.Thread(target=self.update, daemon=True)
-        t.start()
 
-    def setRes(self, width=None, height=None):
-        if width and height:
-            self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-            self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        # for thread safety
+        self.lock = threading.Lock()
 
-    def getResWidth(self):
-        return int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    
+        # start background frame grab thread
+        self.thread = threading.Thread(target=self.update, daemon=True)
+        self.thread.start()
+
     def getResHeight(self):
         return int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    
+    def getResWidth(self):
+        return int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 
     def update(self):
         while not self.stopped:
@@ -27,11 +30,18 @@ class WebcamStream:
             if not grabbed:
                 self.stop()
                 break
-            self.grabbed, self.frame = grabbed, frame
+            # safely store only the latest frame
+            with self.lock:
+                self.frame = frame
 
     def read(self):
-        return self.frame
+        # safely return a copy of the latest frame
+        with self.lock:
+            if self.frame is None:
+                return None
+            return self.frame.copy()
 
     def stop(self):
         self.stopped = True
+        self.thread.join(timeout=1)
         self.cap.release()
