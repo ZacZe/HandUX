@@ -1,3 +1,4 @@
+import cv2
 import mediapipe as mp
 
 # mediapipe setup
@@ -33,3 +34,14 @@ def process_hands(frame, results, display_skeleton):
                 Draw.draw_landmarks(frame, handlm, mpHands.HAND_CONNECTIONS)
 
     return hands_data
+
+def draw_hand_skeleton(frame, hands_data):
+    for hand in hands_data:
+        landmarks = hand["landmarks"]
+        for start_idx, end_idx in mpHands.HAND_CONNECTIONS:
+            x1, y1 = landmarks[start_idx][1], landmarks[start_idx][2]
+            x2, y2 = landmarks[end_idx][1], landmarks[end_idx][2]
+            cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+        for _, x, y in landmarks:
+            cv2.circle(frame, (x, y), 3, (0, 0, 255), -1)
